@@ -1,0 +1,25 @@
+---
+- name: Automate SSL Certificate Replacement
+  hosts: webservers
+  become: yes
+  vars:
+    domains:
+      - "exampledomain.com"
+      - "www.exampledomain.com"
+    email: "email@example.com"
+  tasks:
+    - name: Install Certbot
+      apt:
+        name: certbot
+        state: present
+
+    - name: Obtain SSL certificate using Certbot
+      shell: |
+        certbot certonly --nginx --non-interactive --agree-tos --email {{ email }} -d {{ item }}
+      with_items: "{{ domains }}"
+
+    - name: Reload Nginx
+      systemd:
+        name: nginx
+        state: reloaded
+      when: ansible_facts['os_family'] == "Debian"
